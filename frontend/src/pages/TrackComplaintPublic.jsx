@@ -5,6 +5,7 @@ import { trackComplaintById } from '../services/complaintService';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
+import Footer from '../components/ui/footer';
 
 const statusStyles = {
   Pending: 'bg-amber-100 text-amber-700 border border-amber-200',
@@ -73,8 +74,8 @@ export default function TrackComplaintPublic() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-14 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-slate-50 pt-14 px-4">
+      <div className="max-w-3xl mx-auto pb-6">
         <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <h1 className="text-2xl font-bold text-slate-900">{t('track.title')}</h1>
@@ -184,6 +185,7 @@ export default function TrackComplaintPublic() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

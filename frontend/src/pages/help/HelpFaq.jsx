@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import Footer from '../../components/ui/footer';
 
 const faqs = [
   {
@@ -24,34 +25,37 @@ export default function HelpFaq() {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10">
-      <div className="max-w-4xl mx-auto card p-6 sm:p-8">
-        <h1 className="text-2xl font-bold text-slate-800 mb-2">Frequently Asked Questions</h1>
-        <p className="text-sm text-slate-500 mb-6">Quick answers to common user questions.</p>
+    <>
+      <div className="min-h-screen bg-slate-50 px-4 py-10">
+        <div className="max-w-4xl mx-auto card p-6 sm:p-8">
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Frequently Asked Questions</h1>
+          <p className="text-sm text-slate-500 mb-6">Quick answers to common user questions.</p>
 
-        <div className="space-y-3">
-          {faqs.map((item, index) => {
-            const isOpen = openIndex === index;
-            return (
-              <div key={item.q} className="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setOpenIndex(isOpen ? -1 : index)}
-                  className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
-                >
-                  <span className="text-sm font-semibold text-slate-700">{item.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isOpen && (
-                  <div className="px-4 pb-4 text-sm text-slate-600 leading-relaxed">
-                    {item.a}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <div className="space-y-3">
+            {faqs.map((item, index) => {
+              const isOpen = openIndex === index;
+              return (
+                <div key={item.q} className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOpenIndex(isOpen ? -1 : index)}
+                    className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-slate-50 transition-colors"
+                  >
+                    <span className="text-sm font-semibold text-slate-700">{item.q}</span>
+                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-4 text-sm text-slate-600 leading-relaxed">
+                      {item.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }

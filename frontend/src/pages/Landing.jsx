@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
-import { Shield, ArrowRight, MapPin, BarChart3, Users, Zap, LayoutDashboard, BrainCircuit, Activity, ShieldCheck, Mail, Moon, Sun } from 'lucide-react';
+import { Shield, ArrowRight, MapPin, BarChart3, Users, Zap, LayoutDashboard, BrainCircuit, Activity, ShieldCheck, Mail, Moon, Sun, FileText, Bot, CheckCircle2, User, Wrench, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
 import HelpDropdown from '../components/HelpDropdown';
+import Footer from '../components/ui/footer';
 
 export default function Landing() {
   const { t, i18n } = useTranslation();
@@ -36,10 +37,10 @@ export default function Landing() {
   ];
 
   const steps = [
-    { icon: '📝', ...t('landing.howItWorks.steps.0', { returnObjects: true }) },
-    { icon: '🤖', ...t('landing.howItWorks.steps.1', { returnObjects: true }) },
-    { icon: '✅', ...t('landing.howItWorks.steps.2', { returnObjects: true }) },
-    { icon: '📊', ...t('landing.howItWorks.steps.3', { returnObjects: true }) },
+    { icon: FileText, ...t('landing.howItWorks.steps.0', { returnObjects: true }) },
+    { icon: Bot, ...t('landing.howItWorks.steps.1', { returnObjects: true }) },
+    { icon: CheckCircle2, ...t('landing.howItWorks.steps.2', { returnObjects: true }) },
+    { icon: BarChart3, ...t('landing.howItWorks.steps.3', { returnObjects: true }) },
   ];
 
   const toggleLanguage = () => {
@@ -128,11 +129,6 @@ export default function Landing() {
 
         {/* 2. HERO SECTION */}
         <section className="max-w-4xl mx-auto px-6 text-center mt-12 mb-20 animate-fade-in-up">
-          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase mb-8 ${isDark ? 'bg-white/5 border border-white/10 text-indigo-300' : 'bg-indigo-50 border border-indigo-200 text-indigo-700'}`}>
-            <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse"></span>
-            {t('landing.liveBadge')}
-          </div>
-
           <h1 className={`text-5xl md:text-7xl font-extrabold leading-tight tracking-tight mb-8 ${headingClass}`}>
             {t('landing.heroTitle1')} <br className="hidden md:block" />
             <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent pb-2 block">
@@ -215,9 +211,14 @@ export default function Landing() {
 
             {steps.map((step, idx) => (
               <div key={idx} className="flex flex-col items-center text-center p-4">
+                {(() => {
+                  const StepIcon = step.icon;
+                  return (
                 <div className={`w-14 h-14 border rounded-2xl flex items-center justify-center text-2xl mb-6 relative z-10 hover:scale-[1.05] transition-transform duration-300 ${isDark ? 'bg-slate-900 border-white/10 shadow-xl shadow-black/50' : 'bg-white border-slate-200 shadow-sm'}`}>
-                  {step.icon}
+                  <StepIcon className="w-6 h-6 text-indigo-500" />
                 </div>
+                  );
+                })()}
                 <h3 className={`font-semibold mb-2 ${headingClass}`}>{step.title}</h3>
                 <p className={`text-sm leading-relaxed ${bodyTextClass}`}>{step.desc}</p>
               </div>
@@ -278,20 +279,7 @@ export default function Landing() {
 
       </main>
 
-      {/* 7. FOOTER */}
-      <footer className={`border-t relative z-10 ${isDark ? 'border-white/5 bg-slate-950/80' : 'border-slate-200 bg-white'}`}>
-        <div className={`max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between text-sm ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
-          <div className="flex items-center gap-2 mb-4 md:mb-0">
-            <Shield className="w-4 h-4 text-indigo-500" />
-            <span>{t('landing.footer.rights')}</span>
-          </div>
-          <div className="flex gap-6">
-            <a href="#privacy" className={isDark ? 'hover:text-slate-300 transition-colors' : 'hover:text-slate-900 transition-colors'}>{t('landing.footer.privacy')}</a>
-            <a href="#terms" className={isDark ? 'hover:text-slate-300 transition-colors' : 'hover:text-slate-900 transition-colors'}>{t('landing.footer.terms')}</a>
-            <a href="#contact" className={isDark ? 'hover:text-slate-300 transition-colors' : 'hover:text-slate-900 transition-colors'}>{t('landing.footer.contact')}</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Role Selection Modal */}
       {open && (
@@ -307,7 +295,7 @@ export default function Landing() {
                 className={`w-full text-left p-4 rounded-xl transition font-medium flex items-center justify-between group cursor-pointer ${isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200' : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-800'}`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">👤</span> {t('landing.roleModal.citizen')}
+                  <User className="w-5 h-5 text-indigo-500" /> {t('landing.roleModal.citizen')}
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
               </button>
@@ -317,7 +305,7 @@ export default function Landing() {
                 className={`w-full text-left p-4 rounded-xl transition font-medium flex items-center justify-between group cursor-pointer ${isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200' : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-800'}`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">🛠</span> {t('landing.roleModal.officer')}
+                  <Wrench className="w-5 h-5 text-indigo-500" /> {t('landing.roleModal.officer')}
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
               </button>
@@ -327,7 +315,7 @@ export default function Landing() {
                 className={`w-full text-left p-4 rounded-xl transition font-medium flex items-center justify-between group cursor-pointer ${isDark ? 'bg-white/5 border border-white/10 hover:bg-white/10 text-slate-200' : 'bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-800'}`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">🏛</span> {t('landing.roleModal.admin')}
+                  <Building2 className="w-5 h-5 text-indigo-500" /> {t('landing.roleModal.admin')}
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
               </button>
