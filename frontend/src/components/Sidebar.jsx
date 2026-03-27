@@ -51,8 +51,8 @@ export default function Sidebar({ mobileOpen = false, onCloseMobile = () => {} }
   const closeButtonClass = isDark ? 'text-slate-300 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-100';
 
   useEffect(() => {
-    if (mobileOpen) onCloseMobile();
-  }, [location.pathname, mobileOpen, onCloseMobile]);
+    onCloseMobile();
+  }, [location.pathname]);
 
   return (
     <>
