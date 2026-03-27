@@ -41,8 +41,8 @@ export default function HelpDropdown({ dark = false }) {
   }, [location.pathname]);
 
   const buttonClass = dark
-    ? 'px-3 py-1.5 rounded-lg text-sm border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors inline-flex items-center gap-1.5'
-    : 'px-3 py-1.5 rounded-lg text-sm border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors inline-flex items-center gap-1.5';
+    ? 'px-2.5 sm:px-3 py-1.5 rounded-lg text-sm border border-white/10 bg-white/10 hover:bg-white/15 text-white transition-colors inline-flex items-center gap-1.5'
+    : 'px-2.5 sm:px-3 py-1.5 rounded-lg text-sm border border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors inline-flex items-center gap-1.5';
 
   return (
     <div ref={rootRef} className="relative">
@@ -54,12 +54,12 @@ export default function HelpDropdown({ dark = false }) {
         aria-expanded={open}
       >
         <CircleHelp className="w-4 h-4" />
-        <span className="hidden sm:inline">Help</span>
+        <span className="inline text-sm">Help</span>
         <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       <div
-        className={`absolute right-0 mt-2 w-64 max-w-[calc(100vw-1.5rem)] rounded-lg shadow-md bg-white border border-slate-200 z-50 p-1 transition-all duration-200 origin-top-right ${
+        className={`absolute mt-2 z-50 p-1 rounded-lg shadow-md bg-white border border-slate-200 transition-all duration-200 origin-top right-0 sm:right-0 left-1/2 sm:left-auto -translate-x-1/2 sm:translate-x-0 w-[min(92vw,20rem)] sm:w-64 ${
           open ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto' : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
         }`}
         role="menu"

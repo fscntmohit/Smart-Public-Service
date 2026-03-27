@@ -89,7 +89,7 @@ export default function Landing() {
           </div>
 
           {/* Right Action */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <HelpDropdown dark={isDark} />
             <button
               onClick={toggleTheme}
@@ -108,14 +108,14 @@ export default function Landing() {
             {isSignedIn ? (
               <Link
                 to={getDashboardLink()}
-                className={`${isDark ? 'bg-white/10 hover:bg-white/15 text-white border-white/5' : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'} px-4 py-2 rounded-lg text-sm font-medium transition-colors border flex items-center gap-2`}
+                className={`${isDark ? 'bg-white/10 hover:bg-white/15 text-white border-white/5' : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-900'} px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors border flex items-center gap-2`}
               >
                 {t('common.dashboard')} <ArrowRight className="w-4 h-4" />
               </Link>
             ) : (
               <button
                 onClick={() => setOpen(true)}
-                className="px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors shadow-sm"
+                className="px-3 sm:px-4 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors shadow-sm"
               >
                 {t('landing.nav.signIn')}
               </button>
