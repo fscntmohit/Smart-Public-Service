@@ -11,7 +11,7 @@ export default function HelpVideo() {
           <div className="aspect-video rounded-xl overflow-hidden border border-slate-200 bg-black">
             <iframe
               className="w-full h-full"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+              src="https://www.youtube.com/embed/TdTK7pjCZeg"
               title="How to Use the Platform"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
