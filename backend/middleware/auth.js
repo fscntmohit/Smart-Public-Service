@@ -1,10 +1,21 @@
-const { clerkMiddleware, requireAuth, getAuth } = require('@clerk/express');
+const { clerkMiddleware, getAuth } = require('@clerk/express');
 
 // Clerk session middleware — attach to app-level
 const clerkSession = clerkMiddleware();
 
-// Require authenticated user
-const protect = requireAuth();
+// Require authenticated user (JSON API-safe)
+const protect = (req, res, next) => {
+  try {
+    const { userId } = getAuth(req);
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    return next();
+  } catch (error) {
+    console.error('Protect middleware error:', error);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+};
 
 // Role-based access control middleware
 const requireRole = (...roles) => {

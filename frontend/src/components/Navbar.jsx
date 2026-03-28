@@ -1,8 +1,8 @@
 import { useUser, UserButton } from '@clerk/clerk-react';
-import { Bell, Search, Menu, Moon, Sun } from 'lucide-react';
+import { Search, Menu, Moon, Sun } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../context/ThemeContext';
-import HelpDropdown from './HelpDropdown';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar({ onToggleSidebar = () => {} }) {
   const { user } = useUser();
@@ -37,7 +37,6 @@ export default function Navbar({ onToggleSidebar = () => {} }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 pl-2">
-        <HelpDropdown />
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
@@ -52,10 +51,7 @@ export default function Navbar({ onToggleSidebar = () => {} }) {
         >
           {t('common.language')}
         </button>
-        <button className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
-        </button>
+        <NotificationBell />
 
         <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-slate-200">
           <div className="text-right hidden md:block">

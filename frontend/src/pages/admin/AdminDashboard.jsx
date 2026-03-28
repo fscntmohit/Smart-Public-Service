@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { BarChart3, Users, AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { getStats, getCategoryDistribution, getMonthlyTrends } from '../../services/analyticsService';
-import { getAllComplaints } from '../../services/complaintService';
+import { getAllComplaints, getBreachedComplaints } from '../../services/complaintService';
 import StatCard from '../../components/ui/StatCard';
 import Badge from '../../components/ui/Badge';
 import Spinner from '../../components/ui/Spinner';
@@ -11,30 +12,57 @@ import toast from 'react-hot-toast';
 const COLORS = ['#6366f1', '#0ea5e9', '#f43f5e', '#10b981', '#f59e0b'];
 
 export default function AdminDashboard() {
+  const { isLoaded, isSignedIn, getToken } = useAuth();
   const [stats, setStats] = useState(null);
   const [categories, setCategories] = useState([]);
   const [trends, setTrends] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [breached, setBreached] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
     loadData();
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      const [statsRes, catRes, trendsRes, compRes] = await Promise.all([
-        getStats(),
-        getCategoryDistribution(),
-        getMonthlyTrends(),
-        getAllComplaints({ limit: 5 }),
+      const token = await getToken();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const authConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
+      const results = await Promise.allSettled([
+        getStats(authConfig),
+        getCategoryDistribution(authConfig),
+        getMonthlyTrends(authConfig),
+        getAllComplaints({ limit: 5 }, authConfig),
+        getBreachedComplaints(authConfig),
       ]);
-      setStats(statsRes.data);
-      setCategories(catRes.data);
-      setTrends(trendsRes.data);
-      setComplaints(compRes.data.slice(0, 8));
+
+      const [statsRes, catRes, trendsRes, compRes, breachedRes] = results;
+
+      const failedCount = results.filter((r) => r.status === 'rejected').length;
+
+      if (statsRes.status === 'fulfilled') setStats(statsRes.value.data || null);
+      if (catRes.status === 'fulfilled') setCategories(catRes.value.data || []);
+      if (trendsRes.status === 'fulfilled') setTrends(trendsRes.value.data || []);
+      if (compRes.status === 'fulfilled') setComplaints((compRes.value.data || []).slice(0, 8));
+      if (breachedRes.status === 'fulfilled') setBreached(breachedRes.value.data || []);
+
+      if (failedCount === results.length) {
+        toast.error('Failed to load dashboard', { id: 'admin-dashboard-load-error' });
+      }
     } catch (err) {
-      toast.error('Failed to load dashboard');
+      toast.error('Failed to load dashboard', { id: 'admin-dashboard-load-error' });
     } finally {
       setLoading(false);
     }
@@ -112,6 +140,35 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-center h-full text-sm text-slate-400">No category data</div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* SLA Breach Alerts */}
+      <div className="card mb-6 overflow-hidden border border-rose-200/70">
+        <div className="p-5 border-b border-rose-100 bg-rose-50/70 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-rose-800 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" /> SLA Breach Alerts
+          </h2>
+          <span className="text-xs px-2 py-1 rounded-full bg-rose-100 text-rose-700 font-semibold">
+            {breached.length}
+          </span>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {breached.length === 0 ? (
+            <p className="p-4 text-sm text-slate-500">No breached complaints right now.</p>
+          ) : (
+            breached.slice(0, 8).map((item) => (
+              <div key={item._id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">{item.complaintId} • {item.title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{item.category} • {item.area || 'N/A'} • Assigned: {item.assignedOfficer || 'Unassigned'}</p>
+                </div>
+                <span className="text-xs text-rose-700 bg-rose-50 px-2 py-1 rounded-md font-medium">
+                  Breached at {item.slaDeadline ? new Date(item.slaDeadline).toLocaleString() : 'N/A'}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

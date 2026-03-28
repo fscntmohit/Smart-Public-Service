@@ -1,6 +1,8 @@
 const Complaint = require('../models/Complaint');
 const User = require('../models/User');
 const { getAuth } = require('@clerk/express');
+const { createNotification } = require('../services/notificationService');
+const { emitToUser } = require('../services/socketService');
 
 // Extract clean area/zone from full address
 const extractArea = (fullAddress) => {
@@ -29,6 +31,23 @@ const statusFlow = {
   Pending: ['In Progress'],
   'In Progress': ['Resolved'],
   Resolved: [],
+};
+
+const SLA_HOURS = {
+  Low: 36,
+  Medium: 24,
+  High: 16,
+};
+
+const calculateSlaDeadline = (priority, baseDate = new Date()) => {
+  const hours = SLA_HOURS[priority] || SLA_HOURS.Medium;
+  return new Date(new Date(baseDate).getTime() + hours * 60 * 60 * 1000);
+};
+
+const getStatusUpdateMessage = (status) => {
+  if (status === 'In Progress') return 'Officer started working on the complaint';
+  if (status === 'Resolved') return 'Complaint resolved successfully';
+  return `Status updated to ${status}`;
 };
 
 const generateComplaintId = () => {
@@ -63,7 +82,13 @@ exports.createComplaint = async (req, res) => {
     }
 
     const finalCategory = category;
-    const finalPriority = priority;
+    const finalPriority = ['Low', 'Medium', 'High'].includes(priority) ? priority : null;
+
+    if (!finalPriority) {
+      return res.status(400).json({ error: 'Invalid priority value' });
+    }
+
+    const slaDeadline = calculateSlaDeadline(finalPriority);
 
     // Extract and normalize area
     const cleanArea = extractArea(area);
@@ -116,6 +141,24 @@ exports.createComplaint = async (req, res) => {
       return res.status(500).json({ error: 'Failed to generate complaint ID' });
     }
 
+    const updates = [
+      {
+        message: 'Complaint submitted',
+        status: 'Pending',
+        by: 'citizen',
+        timestamp: new Date(),
+      },
+    ];
+
+    if (assignedOfficer) {
+      updates.push({
+        message: 'Assigned to officer',
+        status: 'Pending',
+        by: 'system',
+        timestamp: new Date(),
+      });
+    }
+
     const complaint = await Complaint.create({
       complaintId,
       title,
@@ -128,8 +171,11 @@ exports.createComplaint = async (req, res) => {
       area: cleanArea,
       fullAddress: area || '',
       image,
+      createdBy: userId,
       userId,
       assignedOfficer,
+      slaDeadline,
+      updates,
       history: [
         {
           status: 'Pending',
@@ -138,6 +184,24 @@ exports.createComplaint = async (req, res) => {
         },
       ],
     });
+
+    if (assignedOfficer) {
+      const message = 'New complaint assigned to you';
+      await createNotification({
+        userId: assignedOfficer,
+        message,
+        type: 'NEW_COMPLAINT',
+        meta: { complaintId: complaint.complaintId, complaintDbId: complaint._id.toString() },
+      });
+
+      emitToUser(assignedOfficer, 'complaint:created', {
+        complaintId: complaint.complaintId,
+        complaintDbId: complaint._id.toString(),
+        title: complaint.title,
+        priority: complaint.priority,
+        category: complaint.category,
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -201,7 +265,9 @@ exports.getAllComplaints = async (req, res) => {
 exports.getMyComplaints = async (req, res) => {
   try {
     const { userId } = getAuth(req);
-    const complaints = await Complaint.find({ userId }).sort({ createdAt: -1 });
+    const complaints = await Complaint.find({
+      $or: [{ createdBy: userId }, { userId }],
+    }).sort({ createdAt: -1 });
 
     res.json(complaints);
   } catch (error) {
@@ -255,6 +321,10 @@ exports.updateStatus = async (req, res) => {
       return res.status(404).json({ message: 'Complaint not found' });
     }
 
+    if (req.userRole === 'officer' && complaint.assignedOfficer !== userId) {
+      return res.status(403).json({ message: 'You can only update complaints assigned to you' });
+    }
+
     const currentStatus = complaint.status;
     const newStatus = status;
 
@@ -277,6 +347,21 @@ exports.updateStatus = async (req, res) => {
       });
     }
 
+    const isActionableStatus = newStatus === 'In Progress' || newStatus === 'Resolved';
+
+    if (isActionableStatus && !complaint.firstActionTaken) {
+      complaint.firstActionTaken = true;
+      complaint.firstActionAt = new Date();
+    }
+
+    if (!complaint.createdBy && complaint.userId) {
+      complaint.createdBy = complaint.userId;
+    }
+
+    if (!complaint.slaDeadline) {
+      complaint.slaDeadline = calculateSlaDeadline(complaint.priority, complaint.createdAt || new Date());
+    }
+
     // Keep existing proof rules for resolve transition
     const effectiveProofImage = proofImage || complaint.proofImage;
     if (newStatus === 'Resolved' && !effectiveProofImage) {
@@ -291,12 +376,25 @@ exports.updateStatus = async (req, res) => {
     if (proofVideo) complaint.proofVideo = proofVideo;
     if (typeof remarks === 'string') complaint.remarks = remarks;
 
-    if (newStatus === 'Resolved') {
+    if (newStatus === 'Resolved' && !complaint.resolvedAt) {
       complaint.resolvedAt = new Date();
     }
 
     if (!Array.isArray(complaint.history)) {
       complaint.history = [];
+    }
+
+    if (!Array.isArray(complaint.updates)) {
+      complaint.updates = [];
+    }
+
+    if (complaint.updates.length === 0) {
+      complaint.updates.push({
+        message: 'Complaint submitted',
+        status: 'Pending',
+        by: 'citizen',
+        timestamp: complaint.createdAt || new Date(),
+      });
     }
 
     complaint.history.push({
@@ -305,7 +403,36 @@ exports.updateStatus = async (req, res) => {
       updatedBy: userId || null,
     });
 
+    complaint.updates.push({
+      message: getStatusUpdateMessage(newStatus),
+      status: newStatus,
+      by: 'officer',
+      timestamp: new Date(),
+    });
+
     await complaint.save();
+
+    const citizenId = complaint.createdBy || complaint.userId;
+    if (citizenId) {
+      const message = 'Your complaint status has been updated';
+      await createNotification({
+        userId: citizenId,
+        message,
+        type: 'UPDATE',
+        meta: {
+          complaintId: complaint.complaintId,
+          complaintDbId: complaint._id.toString(),
+          status: complaint.status,
+        },
+      });
+
+      emitToUser(citizenId, 'complaint:updated', {
+        complaintId: complaint.complaintId,
+        complaintDbId: complaint._id.toString(),
+        status: complaint.status,
+        resolvedAt: complaint.resolvedAt,
+      });
+    }
 
     return res.json({ success: true, complaint });
   } catch (error) {
@@ -314,17 +441,42 @@ exports.updateStatus = async (req, res) => {
   }
 };
 
+exports.getBreachedComplaints = async (req, res) => {
+  try {
+    const complaints = await Complaint.find({ isEscalated: true })
+      .sort({ updatedAt: -1 })
+      .limit(100);
+
+    return res.json(complaints);
+  } catch (error) {
+    console.error('Get breached complaints error:', error);
+    return res.status(500).json({ error: 'Failed to fetch breached complaints' });
+  }
+};
+
 // Assign/reassign officer (admin)
 exports.assignOfficer = async (req, res) => {
   try {
     const { officerId } = req.body;
-    const complaint = await Complaint.findByIdAndUpdate(
-      req.params.id,
-      { $set: { assignedOfficer: officerId } },
-      { new: true }
-    );
+    const complaint = await Complaint.findById(req.params.id);
 
     if (!complaint) return res.status(404).json({ error: 'Complaint not found' });
+
+    complaint.assignedOfficer = officerId;
+
+    if (!Array.isArray(complaint.updates)) {
+      complaint.updates = [];
+    }
+
+    complaint.updates.push({
+      message: 'Assigned to officer',
+      status: complaint.status || 'Pending',
+      by: 'system',
+      timestamp: new Date(),
+    });
+
+    await complaint.save();
+
     res.json(complaint);
   } catch (error) {
     console.error('Assign officer error:', error);

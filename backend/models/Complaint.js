@@ -24,7 +24,7 @@ const complaintSchema = new mongoose.Schema({
   priority: {
     type: String,
     enum: ['Low', 'Medium', 'High'],
-    default: 'Medium',
+    required: true,
   },
   status: {
     type: String,
@@ -55,6 +55,11 @@ const complaintSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  createdBy: {
+    type: String,
+    required: true,
+    index: true,
+  },
   department: {
     type: String,
     default: '',
@@ -80,6 +85,44 @@ const complaintSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
+  slaDeadline: {
+    type: Date,
+    required: true,
+  },
+  firstActionTaken: {
+    type: Boolean,
+    default: false,
+  },
+  firstActionAt: {
+    type: Date,
+    default: null,
+  },
+  isEscalated: {
+    type: Boolean,
+    default: false,
+  },
+  updates: [
+    {
+      message: {
+        type: String,
+        default: '',
+      },
+      status: {
+        type: String,
+        enum: ['Pending', 'In Progress', 'Resolved'],
+        default: 'Pending',
+      },
+      by: {
+        type: String,
+        enum: ['citizen', 'officer', 'system'],
+        default: 'system',
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   history: [
     {
       status: {

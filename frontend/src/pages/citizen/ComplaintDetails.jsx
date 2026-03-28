@@ -42,6 +42,13 @@ export default function ComplaintDetails() {
 
   const statusSteps = ['Pending', 'In Progress', 'Resolved'];
   const currentStep = statusSteps.indexOf(complaint.status);
+  const updates = [...(complaint.updates || [])].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  const getStatusDotClass = (status) => {
+    if (status === 'Resolved') return 'bg-emerald-500';
+    if (status === 'In Progress') return 'bg-sky-500';
+    return 'bg-amber-500';
+  };
 
   const handleCopyId = async () => {
     if (!complaint?.complaintId) return;
@@ -137,6 +144,28 @@ export default function ComplaintDetails() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Activity Updates */}
+      <div className="card p-6 mb-4">
+        <h2 className="text-sm font-semibold text-slate-700 mb-4">📢 Status Updates</h2>
+        {updates.length === 0 ? (
+          <p className="text-sm text-slate-500">No updates yet.</p>
+        ) : (
+          <div className="relative pl-4">
+            <div className="absolute left-[7px] top-1 bottom-1 w-px bg-slate-200"></div>
+            <div className="space-y-3">
+              {updates.map((u, i) => (
+                <div key={`${u.timestamp || i}-${i}`} className="relative pl-4">
+                  <span className={`absolute left-0.5 top-1.5 w-3 h-3 rounded-full border-2 border-white ${getStatusDotClass(u.status)}`}></span>
+                  <p className="text-xs text-slate-400">{new Date(u.timestamp).toLocaleString()}</p>
+                  <p className="text-sm text-slate-700 mt-0.5">{u.message}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{u.status} • {u.by}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Map */}

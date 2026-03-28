@@ -16,6 +16,7 @@ const citizenLinks = [
 const officerLinks = [
   { to: '/officer/dashboard', icon: LayoutDashboard, labelKey: 'sidebar.dashboard' },
   { to: '/officer/map', icon: Map, labelKey: 'sidebar.mapView' },
+  { to: '/officer/reports', icon: FileText, labelKey: 'sidebar.reports' },
 ];
 
 const adminLinks = [
@@ -23,6 +24,7 @@ const adminLinks = [
   { to: '/admin/manage-officers', icon: Users, labelKey: 'sidebar.manageOfficers' },
   { to: '/admin/analytics', icon: BarChart3, labelKey: 'sidebar.analytics' },
   { to: '/admin/heatmap', icon: MapPin, labelKey: 'sidebar.heatmap' },
+  { to: '/admin/reports', icon: FileText, labelKey: 'sidebar.reports' },
 ];
 
 export default function Sidebar({ mobileOpen = false, onCloseMobile = () => {} }) {

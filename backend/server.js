@@ -2,9 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const http = require('http');
 const { clerkSession } = require('./middleware/auth');
+const { initSocketServer } = require('./services/socketService');
+const { startSlaEscalationJob } = require('./jobs/slaEscalationJob');
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
 const parseOrigins = (value = '') =>
@@ -40,6 +44,9 @@ app.use(clerkSession);
 app.use('/api/complaints', require('./routes/complaints'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/reports', require('./routes/reports'));
+app.use('/api/report', require('./routes/reports'));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -51,7 +58,11 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-    app.listen(PORT, () => {
+
+    initSocketServer(httpServer, allowedOrigins);
+    startSlaEscalationJob();
+
+    httpServer.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   })

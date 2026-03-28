@@ -30,6 +30,7 @@ const resources = {
         manageOfficers: 'Manage Officers',
         analytics: 'Analytics',
         heatmap: 'Heatmap',
+        reports: 'Reports',
       },
       landing: {
         nav: {
@@ -182,6 +183,7 @@ const resources = {
         manageOfficers: 'अधिकारियों का प्रबंधन',
         analytics: 'एनालिटिक्स',
         heatmap: 'हीटमैप',
+        reports: 'रिपोर्ट्स',
       },
       landing: {
         nav: {

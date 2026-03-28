@@ -5,7 +5,10 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "migrate:first-action": "node scripts/migrateFirstActionFields.js",
+    "migrate:sla-deadline": "node scripts/migrateSlaDeadlines.js",
+    "migrate:complaint-updates": "node scripts/migrateComplaintUpdates.js"
   },
   "dependencies": {
     "@clerk/express": "^1.3.0",
@@ -13,6 +16,8 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "mongoose": "^8.8.0",
+    "node-cron": "^4.2.1",
+    "pdfkit": "^0.18.0",
     "socket.io": "^4.8.3"
   }
 }

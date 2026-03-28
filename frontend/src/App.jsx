@@ -16,10 +16,12 @@ import ComplaintDetails from './pages/citizen/ComplaintDetails';
 import OfficerDashboard from './pages/officer/OfficerDashboard';
 import OfficerComplaintDetails from './pages/officer/OfficerComplaintDetails';
 import OfficerMap from './pages/officer/OfficerMap';
+import OfficerReports from './pages/officer/Reports';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Analytics from './pages/admin/Analytics';
 import ManageOfficers from './pages/admin/ManageOfficers';
 import Heatmap from './pages/admin/Heatmap';
+import AdminReports from './pages/admin/Reports';
 import HelpVideo from './pages/help/HelpVideo';
 import HelpFaq from './pages/help/HelpFaq';
 import HelpContact from './pages/help/HelpContact';
@@ -115,6 +117,7 @@ export default function App() {
               <Route path="/officer/dashboard" element={<OfficerDashboard />} />
               <Route path="/officer/complaint/:id" element={<OfficerComplaintDetails />} />
               <Route path="/officer/map" element={<OfficerMap />} />
+              <Route path="/officer/reports" element={<OfficerReports />} />
             </Route>
 
             {/* Admin Routes */}
@@ -127,6 +130,7 @@ export default function App() {
               <Route path="/admin/analytics" element={<Analytics />} />
               <Route path="/admin/manage-officers" element={<ManageOfficers />} />
               <Route path="/admin/heatmap" element={<Heatmap />} />
+              <Route path="/admin/reports" element={<AdminReports />} />
             </Route>
 
             {/* Fallback */}

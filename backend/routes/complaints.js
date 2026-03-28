@@ -10,6 +10,7 @@ const {
   updateStatus,
   assignOfficer,
   trackComplaintByPublicId,
+  getBreachedComplaints,
 } = require('../controllers/complaintController');
 
 // Public tracking route (no auth required)
@@ -25,6 +26,7 @@ router.patch('/:id/status', protect, requireRole('officer', 'admin'), updateStat
 
 // Admin routes
 router.get('/', protect, requireRole('admin'), getAllComplaints);
+router.get('/breached', protect, requireRole('admin'), getBreachedComplaints);
 router.patch('/:id/assign', protect, requireRole('admin'), assignOfficer);
 
 // Shared
