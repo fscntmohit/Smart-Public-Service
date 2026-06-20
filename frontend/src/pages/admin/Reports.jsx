@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import { BarChart3, Download, CalendarDays, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { downloadReportPdf } from '../../services/reportService';
@@ -27,18 +26,13 @@ const getApiErrorMessage = async (error) => {
 };
 
 export default function Reports() {
-  const { getToken } = useAuth();
   const [loadingType, setLoadingType] = useState('');
 
   const downloadReport = async (type) => {
     setLoadingType(type);
     try {
-      const token = await getToken();
-      const config = token
-        ? { headers: { Authorization: `Bearer ${token}` } }
-        : {};
-
-      const response = await downloadReportPdf(type, config);
+      // Interceptor attaches the Clerk token — no manual getToken() needed
+      const response = await downloadReportPdf(type);
       const fileName = parseFilenameFromDisposition(
         response.headers['content-disposition'],
         `${type}-report.pdf`

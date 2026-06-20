@@ -324,11 +324,11 @@ export default function SubmitComplaint() {
           </div>
 
           {/* Submit */}
-          {formError && <p className="text-rose-600 text-sm">{formError}</p>}
+          {formError && <p className="text-rose-600 text-sm font-medium">{formError}</p>}
           <div className="pt-4">
             <button
               type="submit"
-              disabled={loading || !form.title.trim() || !form.category || !form.priority || (!form.latitude && !form.area) || !form.image}
+              disabled={loading}
               className="w-full relative flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 text-white font-semibold rounded-xl py-3.5 transition-all hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? (
