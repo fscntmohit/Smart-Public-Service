@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import { BarChart3, Users, AlertTriangle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { getStats, getCategoryDistribution, getMonthlyTrends } from '../../services/analyticsService';
 import { getAllComplaints, getBreachedComplaints } from '../../services/complaintService';
 import StatCard from '../../components/ui/StatCard';
 import Badge from '../../components/ui/Badge';
-import Spinner from '../../components/ui/Spinner';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#6366f1', '#0ea5e9', '#f43f5e', '#10b981', '#f59e0b'];
 
 export default function AdminDashboard() {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
   const [stats, setStats] = useState(null);
   const [categories, setCategories] = useState([]);
   const [trends, setTrends] = useState([]);
@@ -21,54 +18,57 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    loadData();
-  }, [isLoaded, isSignedIn]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const token = await getToken();
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
-      const authConfig = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-
+    const loadData = async () => {
+      setLoading(true);
+      // Interceptor already attaches the Clerk token — no need to call getToken() manually
       const results = await Promise.allSettled([
-        getStats(authConfig),
-        getCategoryDistribution(authConfig),
-        getMonthlyTrends(authConfig),
-        getAllComplaints({ limit: 5 }, authConfig),
-        getBreachedComplaints(authConfig),
+        getStats(),
+        getCategoryDistribution(),
+        getMonthlyTrends(),
+        getAllComplaints({ limit: 5 }),
+        getBreachedComplaints(),
       ]);
 
       const [statsRes, catRes, trendsRes, compRes, breachedRes] = results;
-
-      const failedCount = results.filter((r) => r.status === 'rejected').length;
-
       if (statsRes.status === 'fulfilled') setStats(statsRes.value.data || null);
       if (catRes.status === 'fulfilled') setCategories(catRes.value.data || []);
       if (trendsRes.status === 'fulfilled') setTrends(trendsRes.value.data || []);
       if (compRes.status === 'fulfilled') setComplaints((compRes.value.data || []).slice(0, 8));
       if (breachedRes.status === 'fulfilled') setBreached(breachedRes.value.data || []);
 
-      if (failedCount === results.length) {
-        toast.error('Failed to load dashboard', { id: 'admin-dashboard-load-error' });
-      }
-    } catch (err) {
-      toast.error('Failed to load dashboard', { id: 'admin-dashboard-load-error' });
-    } finally {
+      const failCount = results.filter(r => r.status === 'rejected').length;
+      if (failCount === results.length) toast.error('Failed to load dashboard', { id: 'admin-dashboard-load-error' });
       setLoading(false);
-    }
-  };
+    };
+    loadData();
+  }, []);
 
-  if (loading) return <Spinner />;
+  if (loading) return (
+    <div className="grid gap-6">
+      {/* Stat card skeletons */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {[1,2,3,4,5].map(i => (
+          <div key={i} className="card p-5 animate-pulse">
+            <div className="h-3 bg-slate-200 rounded w-2/3 mb-3" />
+            <div className="h-7 bg-slate-200 rounded w-1/2" />
+          </div>
+        ))}
+      </div>
+      {/* Chart skeletons */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[1,2].map(i => (
+          <div key={i} className="card p-6 animate-pulse">
+            <div className="h-4 bg-slate-200 rounded w-1/3 mb-4" />
+            <div className="h-64 flex items-end gap-2">
+              {[40,70,55,90,60,80].map((h,j) => (
+                <div key={j} className="flex-1 bg-slate-200 rounded-t-md" style={{height:`${h}%`}} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
     <div className="slide-up">

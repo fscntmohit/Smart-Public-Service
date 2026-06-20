@@ -91,35 +91,40 @@ const getResolvedDurationLabel = (complaint) => {
 };
 
 export default function OfficerDashboard() {
-  const [complaints, setComplaints] = useState([]);
+  const [allComplaints, setAllComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [nowTick, setNowTick] = useState(Date.now());
 
+  // Fetch ALL complaints ONCE — filter client-side (no re-fetch on every filter change)
   useEffect(() => {
-    loadComplaints();
-  }, [statusFilter, priorityFilter]);
+    const load = async () => {
+      setLoading(true);
+      try {
+        const { data } = await getOfficerComplaints();
+        setAllComplaints(data || []);
+      } catch (err) {
+        toast.error('Failed to load complaints');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
+  // SLA tick every minute
   useEffect(() => {
     const interval = setInterval(() => setNowTick(Date.now()), 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const loadComplaints = async () => {
-    setLoading(true);
-    try {
-      const params = {};
-      if (statusFilter) params.status = statusFilter;
-      if (priorityFilter) params.priority = priorityFilter;
-      const { data } = await getOfficerComplaints(params);
-      setComplaints(data);
-    } catch (err) {
-      toast.error('Failed to load complaints');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Client-side filtering — instant, no network call
+  const complaints = allComplaints.filter(c => {
+    if (statusFilter && c.status !== statusFilter) return false;
+    if (priorityFilter && c.priority !== priorityFilter) return false;
+    return true;
+  });
 
   const stats = {
     total: complaints.length,

@@ -1,15 +1,34 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
 import { FileText } from 'lucide-react';
 import { getMyComplaints } from '../../services/complaintService';
 import Badge from '../../components/ui/Badge';
-import Spinner from '../../components/ui/Spinner';
 import EmptyState from '../../components/ui/EmptyState';
 import toast from 'react-hot-toast';
 
+// Skeleton row while loading
+function ComplaintSkeleton() {
+  return (
+    <div className="card p-5 animate-pulse">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <div className="h-4 bg-slate-200 rounded w-2/3" />
+          <div className="h-5 bg-slate-200 rounded-full w-16" />
+        </div>
+        <div className="h-3 bg-slate-200 rounded w-full" />
+        <div className="h-3 bg-slate-200 rounded w-4/5" />
+        <div className="flex gap-2">
+          <div className="h-6 bg-slate-200 rounded-md w-20" />
+          <div className="h-6 bg-slate-200 rounded-md w-16" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const FILTERS = ['all', 'Pending', 'In Progress', 'Resolved'];
+
 export default function TrackComplaints() {
-  const { isLoaded, isSignedIn, getToken } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -32,52 +51,44 @@ export default function TrackComplaints() {
   }, [complaints]);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    loadComplaints();
-  }, [isLoaded, isSignedIn]);
-
-  const loadComplaints = async () => {
-    setLoading(true);
-    try {
-      const token = await getToken();
-      if (!token) {
+    // The API interceptor already attaches the Clerk token — no need to call getToken() manually
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await getMyComplaints();
+        setComplaints(res.data || []);
+      } catch (err) {
+        toast.error('Failed to load complaints', { id: 'load-complaints-error' });
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const complaintsRes = await getMyComplaints({
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setComplaints(complaintsRes.data);
-    } catch (err) {
-      toast.error('Failed to load complaints', { id: 'load-complaints-error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    load();
+  }, []);
 
   const filtered = filter === 'all'
     ? complaints
     : complaints.filter((c) => c.status === filter);
-
-  if (loading) return <Spinner />;
 
   return (
     <div className="slide-up">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">My Complaints</h1>
-          <p className="text-sm text-slate-500 mt-1">{complaints.length} total complaints</p>
+          <p className="text-sm text-slate-500 mt-1">
+            {loading ? 'Loading…' : `${complaints.length} total complaints`}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          {['all', 'Pending', 'In Progress', 'Resolved'].map((f) => (
+        <div className="flex items-center gap-2 flex-wrap">
+          {FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === f
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                filter === f
                   ? 'bg-indigo-500 text-white shadow-sm'
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                }`}
+              }`}
             >
               {f === 'all' ? 'All' : f}
             </button>
@@ -85,7 +96,18 @@ export default function TrackComplaints() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        // Show skeleton cards instead of a full-page spinner
+        <div className="grid lg:grid-cols-3 gap-4 items-start">
+          <div className="lg:col-span-2 grid gap-4">
+            {[1, 2, 3].map(i => <ComplaintSkeleton key={i} />)}
+          </div>
+          <div className="card p-4 animate-pulse">
+            <div className="h-4 bg-slate-200 rounded w-1/2 mb-4" />
+            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-slate-200 rounded-lg mb-2" />)}
+          </div>
+        </div>
+      ) : filtered.length === 0 ? (
         <EmptyState
           title="No complaints found"
           description={filter === 'all' ? "You haven't submitted any complaints yet." : `No ${filter} complaints.`}

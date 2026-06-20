@@ -8,6 +8,7 @@ const normalizedBaseUrl = rawBaseUrl
 const api = axios.create({
   baseURL: normalizedBaseUrl,
   headers: { 'Content-Type': 'application/json' },
+  timeout: 15000, // 15s — prevents Render cold-start from hanging pages indefinitely
 });
 
 // Attach Clerk token to every request
