@@ -34,19 +34,30 @@ import Spinner from './components/ui/Spinner';
 function AuthSetup({ children }) {
   const { getToken, isSignedIn } = useAuth();
   const { user } = useUser();
-  const [isSyncing, setIsSyncing] = useState(true);
+  // Start false — don't block public/sign-in pages before Clerk loads
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    if (isSignedIn === undefined || user === undefined) return; // Clerk still loading
+    // Clerk is still initializing — do nothing yet
+    if (isSignedIn === undefined || user === undefined) return;
 
+    // Not signed in — nothing to sync, render immediately
     if (!isSignedIn) {
       setIsSyncing(false);
       return;
     }
 
+    // Signed in — set up auth interceptor and sync user to backend
     if (isSignedIn && getToken && user) {
       setAuthInterceptor(getToken);
-      // Sync user to backend
+      setIsSyncing(true);
+
+      // 10-second timeout so a Render cold-start never freezes the UI
+      const timeout = setTimeout(() => {
+        console.warn('syncUser timed out — proceeding without sync');
+        setIsSyncing(false);
+      }, 10000);
+
       syncUser({
         name: user?.fullName || '',
         email: user?.primaryEmailAddress?.emailAddress || '',
@@ -54,6 +65,7 @@ function AuthSetup({ children }) {
       })
       .catch((err) => console.error('Sync user failed', err))
       .finally(() => {
+        clearTimeout(timeout);
         setIsSyncing(false);
       });
     }
@@ -85,12 +97,12 @@ export default function App() {
             <Route path="/help/contact" element={<HelpContact />} />
             <Route path="/sign-in/*" element={
               <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <SignIn routing="path" path="/sign-in" afterSignInUrl="/redirect" />
+                <SignIn routing="path" path="/sign-in" forceRedirectUrl="/redirect" />
               </div>
             } />
             <Route path="/sign-up/*" element={
               <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <SignUp routing="path" path="/sign-up" afterSignUpUrl="/redirect" />
+                <SignUp routing="path" path="/sign-up" forceRedirectUrl="/redirect" />
               </div>
             } />
             
